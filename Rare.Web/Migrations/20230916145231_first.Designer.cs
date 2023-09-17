@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Rare.Web;
 
@@ -11,9 +12,11 @@ using Rare.Web;
 namespace Rare.Web.Migrations
 {
     [DbContext(typeof(RareDbContext))]
-    partial class RareDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230916145231_first")]
+    partial class first
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -142,12 +145,6 @@ namespace Rare.Web.Migrations
 
             modelBuilder.Entity("Rare.Web.Data.PostUserReactionDataEntity", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
                     b.Property<int>("PostId")
                         .HasColumnType("int");
 
@@ -156,8 +153,6 @@ namespace Rare.Web.Migrations
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
-
-                    b.HasKey("Id");
 
                     b.HasIndex("PostId");
 

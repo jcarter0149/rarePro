@@ -12,8 +12,8 @@ using Rare.Web;
 namespace Rare.Web.Migrations
 {
     [DbContext(typeof(RareDbContext))]
-    [Migration("20230912015156_First")]
-    partial class First
+    [Migration("20230916183141_addedIdToPostReactions")]
+    partial class addedIdToPostReactions
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -143,6 +143,34 @@ namespace Rare.Web.Migrations
                     b.ToTable("Posts");
                 });
 
+            modelBuilder.Entity("Rare.Web.Data.PostUserReactionDataEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReactionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("ReactionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PostReactions");
+                });
+
             modelBuilder.Entity("Rare.Web.Data.ReactionDataEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -247,16 +275,11 @@ namespace Rare.Web.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("ReactionDataEntityId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Uid")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ReactionDataEntityId");
 
                     b.ToTable("Users");
                 });
@@ -326,6 +349,33 @@ namespace Rare.Web.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Rare.Web.Data.PostUserReactionDataEntity", b =>
+                {
+                    b.HasOne("Rare.Web.Data.PostDataEntity", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Rare.Web.Data.ReactionDataEntity", "Reaction")
+                        .WithMany()
+                        .HasForeignKey("ReactionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Rare.Web.Data.UserDataEntity", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("Reaction");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Rare.Web.Data.SubscriptionDataEntity", b =>
                 {
                     b.HasOne("Rare.Web.Data.UserDataEntity", "Author")
@@ -345,21 +395,9 @@ namespace Rare.Web.Migrations
                     b.Navigation("Follower");
                 });
 
-            modelBuilder.Entity("Rare.Web.Data.UserDataEntity", b =>
-                {
-                    b.HasOne("Rare.Web.Data.ReactionDataEntity", null)
-                        .WithMany("Users")
-                        .HasForeignKey("ReactionDataEntityId");
-                });
-
             modelBuilder.Entity("Rare.Web.Data.PostDataEntity", b =>
                 {
                     b.Navigation("Comments");
-                });
-
-            modelBuilder.Entity("Rare.Web.Data.ReactionDataEntity", b =>
-                {
-                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }

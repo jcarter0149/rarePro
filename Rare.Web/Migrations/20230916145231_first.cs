@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Rare.Web.Migrations
 {
     /// <inheritdoc />
-    public partial class First : Migration
+    public partial class first : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -65,17 +65,11 @@ namespace Rare.Web.Migrations
                     CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     IsStaff = table.Column<bool>(type: "bit", nullable: false),
-                    Uid = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ReactionDataEntityId = table.Column<int>(type: "int", nullable: true)
+                    Uid = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Users_Reactions_ReactionDataEntityId",
-                        column: x => x.ReactionDataEntityId,
-                        principalTable: "Reactions",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -165,38 +159,31 @@ namespace Rare.Web.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PostReactions",
+                name: "PostDataEntityReactionDataEntity",
                 columns: table => new
                 {
                     PostsId = table.Column<int>(type: "int", nullable: false),
-                    ReactionsId = table.Column<int>(type: "int", nullable: false),
-                    UsersId = table.Column<int>(type: "int", nullable: false)
+                    ReactionsId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PostReaction", x => new { x.PostsId, x.ReactionsId, x.UsersId });
+                    table.PrimaryKey("PK_PostDataEntityReactionDataEntity", x => new { x.PostsId, x.ReactionsId });
                     table.ForeignKey(
-                        name: "FK_PostReaction_Posts_PostsId",
+                        name: "FK_PostDataEntityReactionDataEntity_Posts_PostsId",
                         column: x => x.PostsId,
                         principalTable: "Posts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_PostReaction_Reactions_ReactionsId",
+                        name: "FK_PostDataEntityReactionDataEntity_Reactions_ReactionsId",
                         column: x => x.ReactionsId,
                         principalTable: "Reactions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_PostReaction_Users_UsersId",
-                        column: x => x.UsersId,
-                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "PostTags",
+                name: "PostDataEntityTagDataEntity",
                 columns: table => new
                 {
                     PostsId = table.Column<int>(type: "int", nullable: false),
@@ -204,17 +191,47 @@ namespace Rare.Web.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PostTag", x => new { x.PostsId, x.TagsId });
+                    table.PrimaryKey("PK_PostDataEntityTagDataEntity", x => new { x.PostsId, x.TagsId });
                     table.ForeignKey(
-                        name: "FK_PostTag_Posts_PostsId",
+                        name: "FK_PostDataEntityTagDataEntity_Posts_PostsId",
                         column: x => x.PostsId,
                         principalTable: "Posts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_PostTag_Tags_TagsId",
+                        name: "FK_PostDataEntityTagDataEntity_Tags_TagsId",
                         column: x => x.TagsId,
                         principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PostReactions",
+                columns: table => new
+                {
+                    PostId = table.Column<int>(type: "int", nullable: false),
+                    ReactionId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.ForeignKey(
+                        name: "FK_PostReactions_Posts_PostId",
+                        column: x => x.PostId,
+                        principalTable: "Posts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PostReactions_Reactions_ReactionId",
+                        column: x => x.ReactionId,
+                        principalTable: "Reactions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PostReactions_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -230,14 +247,29 @@ namespace Rare.Web.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PostReaction_ReactionsId",
-                table: "PostReactions",
+                name: "IX_PostDataEntityReactionDataEntity_ReactionsId",
+                table: "PostDataEntityReactionDataEntity",
                 column: "ReactionsId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PostTag_TagsId",
-                table: "PostTags",
+                name: "IX_PostDataEntityTagDataEntity_TagsId",
+                table: "PostDataEntityTagDataEntity",
                 column: "TagsId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PostReactions_PostId",
+                table: "PostReactions",
+                column: "PostId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PostReactions_ReactionId",
+                table: "PostReactions",
+                column: "ReactionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PostReactions_UserId",
+                table: "PostReactions",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Posts_CategoryId",
@@ -258,11 +290,6 @@ namespace Rare.Web.Migrations
                 name: "IX_Subscriptions_FollowerId",
                 table: "Subscriptions",
                 column: "FollowerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_ReactionDataEntityId",
-                table: "Users",
-                column: "ReactionDataEntityId");
         }
 
         /// <inheritdoc />
@@ -272,28 +299,31 @@ namespace Rare.Web.Migrations
                 name: "Comments");
 
             migrationBuilder.DropTable(
-                name: "PostReactions");
+                name: "PostDataEntityReactionDataEntity");
 
             migrationBuilder.DropTable(
-                name: "PostTags");
+                name: "PostDataEntityTagDataEntity");
+
+            migrationBuilder.DropTable(
+                name: "PostReactions");
 
             migrationBuilder.DropTable(
                 name: "Subscriptions");
 
             migrationBuilder.DropTable(
+                name: "Tags");
+
+            migrationBuilder.DropTable(
                 name: "Posts");
 
             migrationBuilder.DropTable(
-                name: "Tags");
+                name: "Reactions");
 
             migrationBuilder.DropTable(
                 name: "Categories");
 
             migrationBuilder.DropTable(
                 name: "Users");
-
-            migrationBuilder.DropTable(
-                name: "Reactions");
         }
     }
 }

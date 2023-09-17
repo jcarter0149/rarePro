@@ -13,7 +13,13 @@ namespace Rare.Web
         public DbSet<ReactionDataEntity> Reactions { get; set; }
         public DbSet<SubscriptionDataEntity> Subscriptions { get; set; }
         public DbSet<TagDataEntity> Tags { get; set; }
+        public DbSet<PostUserReactionDataEntity> PostReactions { get; set; }
 
-       
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            
+        }
+
+
     }
 }
