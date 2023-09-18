@@ -10,14 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(name: MyAllowSpecificOrigins,
-                      policy =>
-                      {
-                          policy.WithOrigins("http://localhost:3000");
-                      });
-});
+builder.Services.AddCors();
 
 builder.Services.AddDbContext<RareDbContext>(options =>
 {
@@ -29,7 +22,11 @@ builder.Services.AddDbContext<RareDbContext>(options =>
 
 var app = builder.Build();
 
-app.UseCors(MyAllowSpecificOrigins);
+app.UseCors(builder => builder
+ .AllowAnyOrigin()
+ .AllowAnyMethod()
+ .AllowAnyHeader()
+);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -56,13 +53,13 @@ app.MapGet("/user/{id}", async (RareDbContext _context, int id) =>
     return Results.Ok(user);
 });
 
-app.MapGet("/user/{uid}", async (RareDbContext _context, string uid) =>
+app.MapPost("/user/uid", async (RareDbContext _context, UidRequest request) =>
 {
-    UserDataEntity user = await _context.Users.Where(x => x.Uid.ToLower() == uid.ToLower()).FirstOrDefaultAsync();
+    UserDataEntity user = await _context.Users.Where(x => x.Uid.ToLower() == request.Uid.ToLower()).FirstOrDefaultAsync();
 
     if (user == null)
     {
-        return Results.Problem($"User with UID {uid} not found");
+        return Results.Unauthorized();
     }
 
     return Results.Ok(user);
@@ -70,6 +67,11 @@ app.MapGet("/user/{uid}", async (RareDbContext _context, string uid) =>
 
 app.MapPost("/user", async (RareDbContext _context, UserDataEntity newUser) =>
 {
+    string firstName = newUser.FirstName.Split(' ')[0];
+    string lastName = newUser.FirstName.Split(' ')[1];
+    newUser.FirstName = firstName;
+    newUser.LastName = lastName;
+    newUser.CreatedOn = DateTime.Now;
     _context.Add(newUser);
     await _context.SaveChangesAsync();
 
@@ -96,23 +98,27 @@ app.MapPost("/post", async (RareDbContext _context, CreatePostDto Post) =>
 {
     PostDataEntity newPost = new()
     {
-        Title = Post.Title,
+        Title = "test",
         PublicationDate = Post.PublicationDate,
-        ImageUrl = Post.ImageUrl,
-        Content = Post.Content
+        ImageUrl = "test",
+        Content = Post.Content,
     };
 
     newPost.User = await _context.Users.FirstOrDefaultAsync(x => x.Id == Post.UserId);
 
+
     newPost.Category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == Post.CategoryId);
 
-    foreach (var id in Post.Tags)
+    if (Post.Tags?.Count > 0)
     {
-        TagDataEntity newTag = await _context.Tags.FirstOrDefaultAsync(x => x.Id == id);
+        foreach (var id in Post.Tags)
+        {
+            TagDataEntity newTag = await _context.Tags.FirstOrDefaultAsync(x => x.Id == id);
 
-        newPost.Tags.Add(newTag);
+            newPost.Tags.Add(newTag);
+        }
     }
-
+    _context.Add(newPost);
     await _context.SaveChangesAsync();
 
     return Results.Ok();
@@ -120,7 +126,7 @@ app.MapPost("/post", async (RareDbContext _context, CreatePostDto Post) =>
 
 app.MapGet("/post/{postId}", async (RareDbContext _context, int postId, int? userId) =>
 {
-    PostDataEntity postDataEntity = await  _context.Posts.FirstOrDefaultAsync(x => x.Id == postId);
+    PostDataEntity postDataEntity = await _context.Posts.FirstOrDefaultAsync(x => x.Id == postId);
 
     List<PostUserReactionDataEntity> reactions = await _context.PostReactions.Include(x => x.Reaction).Include(x => x.User).Where(x => x.Post.Id == postId).ToListAsync();
 
@@ -138,14 +144,46 @@ app.MapGet("/post/{postId}", async (RareDbContext _context, int postId, int? use
 
 });
 
+app.MapGet("/posts", async (RareDbContext _context, int? userId) =>
+{
+    List<PostDataEntity> posts = await _context.Posts.Include(x => x.User).ToListAsync();
+
+    List<PostDto> postsInDto = new();
+
+    foreach (var post in posts)
+    {
+        List<PostUserReactionDataEntity> reactions = await _context.PostReactions.Include(x => x.Reaction).Include(x => x.User).Where(x => x.Post.Id == post.Id).ToListAsync();
+
+        PostUserReactionDataEntity userReactionDataEntity = null;
+        if (userId != null || userId > 0)
+        {
+            userReactionDataEntity = reactions.Where(x => x.User.Id == userId).FirstOrDefault();
+        }
+
+        PostDto newPost = new()
+        {
+            Id = post.Id,
+            Content = post.Content,
+            Reactions = reactions,
+            UserReaction = userReactionDataEntity,
+            Author = post.User
+        };
+
+        postsInDto.Add(newPost);
+    };
+
+    return Results.Ok(postsInDto);
+
+});
+
 app.MapPost("/post/reaction", async (RareDbContext _context, CreateUserReactionDto userReaction) =>
 {
     PostUserReactionDataEntity previousUserReaction = await _context.PostReactions.FirstOrDefaultAsync(x => x.Post.Id == userReaction.PostId && x.User.Id == userReaction.UserId);
 
-    if(previousUserReaction != null)
+    if (previousUserReaction != null)
     {
         _context.PostReactions.Remove(previousUserReaction);
-    }
+    } 
     PostUserReactionDataEntity newReaction = new();
 
     newReaction.User = await _context.Users.FirstOrDefaultAsync(x => x.Id == userReaction.UserId);
@@ -153,7 +191,7 @@ app.MapPost("/post/reaction", async (RareDbContext _context, CreateUserReactionD
     newReaction.Reaction = await _context.Reactions.FirstOrDefaultAsync(x => x.Id == userReaction.ReactionId);
 
     _context.Add(newReaction);
-    await _context.SaveChangesAsync();  
+    await _context.SaveChangesAsync();
 
     return Results.Ok(newReaction);
 });
