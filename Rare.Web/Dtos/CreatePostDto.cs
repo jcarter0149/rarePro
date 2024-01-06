@@ -11,5 +11,13 @@ namespace Rare.Web.Dtos
         public string Content { get; set; }
         public int CategoryId { get; set; }
         public ICollection<int> Tags { get; set; }
+
+        public static PostDataEntity MapTo(CreatePostDto dto)
+        {
+            return new PostDataEntity()
+            {
+                ImageUrl = dto.ImageUrl
+            };
+        }
     }
 }
