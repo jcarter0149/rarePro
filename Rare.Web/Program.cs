@@ -207,4 +207,38 @@ app.MapDelete("post/reaction", async (RareDbContext _context, int id) =>
     return Results.Ok();
 });
 
+app.MapPost("order/additem", async (RareDbContext _context, AddItemToOrderDto addItemToOrderDto) =>
+{
+    Order order = await _context.Orders.FirstOrDefaultAsync(x => x.Id == addItemToOrderDto.OrderId);
+
+    Item item = await _context.Items.FirstOrDefaultAsync(x => x.Id == addItemToOrderDto.ItemId);
+    OrderItem orderItem = new()
+    {
+        Item = item,
+        Order = order
+    };
+
+    order.Items.Add(orderItem);
+
+    await _context.SaveChangesAsync();
+
+    return Results.Ok();
+});
+
+app.MapPost("/order/removeitem", async (RareDbContext _context, AddItemToOrderDto addItemToOrderDto) =>
+{
+    Order order = await _context.Orders.FirstOrDefaultAsync(x => x.Id == addItemToOrderDto.OrderId);
+
+    Item item = await _context.Items.FirstOrDefaultAsync(x => x.Id == addItemToOrderDto.ItemId);
+
+    OrderItem orderItem = await _context.OrderItem.FirstOrDefaultAsync(x => x.Item.Id == item.Id && x.Order.Id == order.Id);
+
+    
+    order.Items.Remove(orderItem);
+
+    await _context.SaveChangesAsync();
+
+    return Results.Ok();
+});
+
 app.Run();
